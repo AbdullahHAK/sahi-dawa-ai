@@ -1,0 +1,16 @@
+# Python dependencies and environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# System & OS files
+.DS_Store
+Thumbs.db
+
+# Databases & local storage
+*.sqlite3
+demo_db_backup/
