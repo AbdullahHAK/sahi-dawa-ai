@@ -94,6 +94,7 @@ def load_catalogue_dataframe(csv_path: Path) -> pd.DataFrame:
     df["_generic_name_norm"] = df["generic_name"].apply(normalize_text)
     df["_active_ingredient_norm"] = df["active_ingredient"].apply(normalize_text)
     df["_strength_norm"] = df["strength"].apply(normalize_text)
+    df["_dosage_form_norm"] = df["dosage_form"].apply(normalize_text)
 
     return df
 
@@ -178,11 +179,26 @@ class CatalogueRepository:
         strength_norm = normalize_text(strength)
         return df[df["_strength_norm"] == strength_norm]
 
-    def find_by_active_ingredient(
-        self, active_ingredient: str, exclude_medicine_id: Optional[str] = None
+    def find_equivalents(
+        self,
+        active_ingredient: str,
+        strength: str,
+        dosage_form: str,
+        exclude_medicine_id: Optional[str] = None,
     ) -> pd.DataFrame:
+        """Records that are the same medicine: same active ingredient, same
+        strength, same dosage form. Brand, manufacturer and pack size may
+        differ -- that's the point of the comparison.
+        """
         ai_norm = normalize_text(active_ingredient)
-        matches = self._df[self._df["_active_ingredient_norm"] == ai_norm]
+        strength_norm = normalize_text(strength)
+        dosage_form_norm = normalize_text(dosage_form)
+
+        matches = self._df[
+            (self._df["_active_ingredient_norm"] == ai_norm)
+            & (self._df["_strength_norm"] == strength_norm)
+            & (self._df["_dosage_form_norm"] == dosage_form_norm)
+        ]
         if exclude_medicine_id is not None:
             matches = matches[matches["medicine_id"] != exclude_medicine_id]
         return matches

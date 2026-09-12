@@ -39,7 +39,7 @@ def test_generic_name_with_multiple_brands_at_same_strength_is_ambiguous(sample_
     result = identify_medicine(sample_repository, "GenericX", "100mg")
     assert result.status == MatchStatus.AMBIGUOUS
     ids = {c.medicine_id for c in result.candidates}
-    assert ids == {"TESTX001", "TESTX003"}
+    assert ids == {"TESTX001", "TESTX003", "TESTX005", "TESTX006", "TESTX007"}
 
 
 def test_unknown_medicine_returns_standard_not_found_message(sample_repository):

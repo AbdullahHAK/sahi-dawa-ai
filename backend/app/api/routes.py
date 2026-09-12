@@ -13,7 +13,7 @@ from app.models.schemas import (
 )
 from app.services.catalogue import CatalogueRepository
 from app.services.matching import identify_medicine
-from app.services.pricing import compare_prices, get_same_ingredient_alternatives
+from app.services.pricing import compare_prices, get_equivalent_alternatives
 
 router = APIRouter()
 
@@ -26,9 +26,9 @@ def post_prescription(
     """Identify the prescribed medicine and return catalogue-backed comparisons.
 
     This covers only the deterministic catalogue layer: identification,
-    the verified record, same-active-ingredient alternatives and price
-    comparison. RAG explanation, encounter storage and pattern detection are
-    implemented by other layers.
+    the verified record, same-medicine (ingredient + strength + dosage form)
+    alternatives and price comparison. RAG explanation, encounter storage
+    and pattern detection are implemented by other layers.
     """
     result = identify_medicine(repository, request.medicine, request.dosage)
 
@@ -43,7 +43,7 @@ def post_prescription(
     )
 
     if result.status == MatchStatus.FOUND and result.medicine is not None:
-        alternatives = get_same_ingredient_alternatives(repository, result.medicine)
+        alternatives = get_equivalent_alternatives(repository, result.medicine)
         response.medicine = result.medicine
         response.alternatives = alternatives
         response.price_comparison = compare_prices(result.medicine, alternatives)
@@ -68,17 +68,20 @@ def get_alternatives(
     medicine_id: str,
     repository: CatalogueRepository = Depends(get_catalogue_repository),
 ) -> AlternativesResponse:
-    """Return same-active-ingredient catalogue records and a price comparison."""
+    """Return same-medicine (ingredient + strength + dosage form) catalogue
+    records and a price comparison."""
     record = repository.get_by_id(medicine_id)
     if record is None:
         raise HTTPException(status_code=404, detail=NOT_FOUND_MESSAGE)
 
-    alternatives = get_same_ingredient_alternatives(repository, record)
+    alternatives = get_equivalent_alternatives(repository, record)
     price_comparison = compare_prices(record, alternatives)
 
     return AlternativesResponse(
         medicine_id=record.medicine_id,
         active_ingredient=record.active_ingredient,
+        strength=record.strength,
+        dosage_form=record.dosage_form,
         alternatives=alternatives,
         price_comparison=price_comparison,
     )

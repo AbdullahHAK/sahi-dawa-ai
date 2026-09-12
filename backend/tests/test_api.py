@@ -15,9 +15,16 @@ def test_post_prescription_found(client):
     body = resp.json()
     assert body["status"] == "FOUND"
     assert body["medicine"]["medicine_id"] == "TESTX001"
-    assert body["price_comparison"]["lowest_price"] == 80.0
+
     alt_ids = {a["medicine_id"] for a in body["alternatives"]}
-    assert alt_ids == {"TESTX002", "TESTX003", "TESTX004"}
+    assert alt_ids == {"TESTX005", "TESTX006", "TESTX007"}
+
+    comparison = body["price_comparison"]
+    assert comparison["comparison_basis"] == "UNIT_PRICE"
+    assert comparison["lowest_unit_price"] == 7.5
+    assert comparison["lowest_unit_price_medicine_id"] == "TESTX005"
+    assert comparison["lowest_pack_price"] == 90.0
+    assert comparison["lowest_pack_price_medicine_id"] == "TESTX006"
 
 
 def test_post_prescription_not_found(client):
@@ -74,9 +81,11 @@ def test_get_alternatives_success(client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["active_ingredient"] == "IngredientX"
+    assert body["strength"] == "100mg"
+    assert body["dosage_form"] == "Tablet"
     ids = {a["medicine_id"] for a in body["alternatives"]}
-    assert ids == {"TESTX002", "TESTX003", "TESTX004"}
-    assert body["price_comparison"]["lowest_price"] == 80.0
+    assert ids == {"TESTX005", "TESTX006", "TESTX007"}
+    assert body["price_comparison"]["lowest_unit_price"] == 7.5
 
 
 def test_get_alternatives_not_found(client):

@@ -12,12 +12,28 @@ SAMPLE_CSV_ROWS = [
     # drap_source_url, last_verified, data_status, medicine_category
     ["TESTX001", "BrandA", "GenericX", "IngredientX", "100mg", "Tablet", "10's", "ManuA",
      "100.0", "01 Jan, 2026", "REG1", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # different strength than TESTX001 -> must NOT be an alternative to it
     ["TESTX002", "BrandA", "GenericX", "IngredientX", "200mg", "Tablet", "10's", "ManuA",
      "150.0", "01 Jan, 2026", "REG2", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # same strength but different dosage form than TESTX001 -> must NOT be an alternative to it
     ["TESTX003", "BrandB", "GenericX", "IngredientX", "100mg", "Capsule", "10's", "ManuB",
      "80.0", "01 Jan, 2026", "REG3", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # standalone medicine with a missing price
     ["TESTX004", "BrandC", "GenericY", "IngredientX", "50mg", "Tablet", "5's", "ManuC",
      "", "", "REG4", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # same medicine as TESTX001 (ingredient+strength+form), bigger pack, cheaper per tablet
+    ["TESTX005", "BrandD", "GenericX", "IngredientX", "100mg", "Tablet", "20's", "ManuD",
+     "150.0", "01 Jan, 2026", "REG6", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # same medicine as TESTX001, but an unparseable pack size (lowest total pack price)
+    ["TESTX006", "BrandE", "GenericX", "IngredientX", "100mg", "Tablet", "Strip", "ManuE",
+     "90.0", "01 Jan, 2026", "REG7", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # same medicine as TESTX001, parseable pack size but missing price
+    ["TESTX007", "BrandF", "GenericX", "IngredientX", "100mg", "Tablet", "10's", "ManuF",
+     "", "", "REG8", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # equivalent for TESTX004 (ingredient+strength+form match), with a real price
+    ["TESTX008", "BrandG", "GenericW", "IngredientX", "50mg", "Tablet", "10's", "ManuG",
+     "60.0", "01 Jan, 2026", "REG9", "http://example.com", "2026-01-01", "VERIFIED", "Antibiotic"],
+    # different active ingredient entirely -> must never appear as an alternative to anything above
     ["TESTZ001", "BrandZ", "GenericZ", "IngredientZ", "10mg", "Tablet", "10's", "ManuZ",
      "50.0", "01 Jan, 2026", "REG5", "http://example.com", "2026-01-01", "VERIFIED", "Non-antibiotic"],
 ]

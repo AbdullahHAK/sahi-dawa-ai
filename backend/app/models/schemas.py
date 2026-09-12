@@ -13,8 +13,9 @@ AMBIGUOUS_MESSAGE = (
 )
 
 SAME_INGREDIENT_NOTE = (
-    "These medicines contain the same active ingredient according to our verified "
-    "catalogue. Discuss any substitution with your healthcare professional."
+    "These medicines share the same active ingredient, strength and dosage form "
+    "according to our verified catalogue. This is not a recommendation to switch -- "
+    "discuss any substitution with your doctor or pharmacist."
 )
 
 
@@ -57,7 +58,10 @@ class CandidateSummary(BaseModel):
 
 
 class AlternativeRecord(BaseModel):
-    """A same-active-ingredient catalogue record, for comparison display."""
+    """A same active-ingredient + strength + dosage-form catalogue record --
+    i.e. the same medicine in a different brand and/or pack size, for
+    comparison display. Not a different product, and not a recommendation.
+    """
 
     medicine_id: str
     brand_name: str
@@ -70,17 +74,38 @@ class AlternativeRecord(BaseModel):
     price_effective_date: Optional[str] = None
     data_status: str
     last_verified: Optional[str] = None
+    pack_quantity: Optional[float] = None
+    pack_unit: Optional[str] = None
+    unit_price: Optional[float] = None
 
 
 class PriceComparison(BaseModel):
-    """Deterministic price comparison across a medicine and its alternatives."""
+    """Deterministic price comparison across a medicine and its equivalents.
+
+    Two independent bases are reported: total pack price (always available
+    whenever a price exists) and normalized unit price (only when pack
+    quantity can be reliably parsed for every item being compared). The two
+    can disagree -- a bigger pack can cost more in total but less per unit --
+    so both are returned rather than collapsing to a single "cheapest".
+    """
 
     current_price: Optional[float] = None
     current_pack_size: str
-    lowest_price: Optional[float] = None
-    lowest_price_medicine_id: Optional[str] = None
-    lowest_price_pack_size: Optional[str] = None
-    price_difference: Optional[float] = None
+    current_pack_quantity: Optional[float] = None
+    current_pack_unit: Optional[str] = None
+    current_unit_price: Optional[float] = None
+
+    lowest_pack_price: Optional[float] = None
+    lowest_pack_price_medicine_id: Optional[str] = None
+    lowest_pack_price_pack_size: Optional[str] = None
+    pack_price_difference: Optional[float] = None
+
+    lowest_unit_price: Optional[float] = None
+    lowest_unit_price_medicine_id: Optional[str] = None
+    lowest_unit_price_unit: Optional[str] = None
+    unit_price_difference: Optional[float] = None
+
+    comparison_basis: str = "PACK_PRICE_ONLY"
     note: str = SAME_INGREDIENT_NOTE
 
 
@@ -89,6 +114,8 @@ class AlternativesResponse(BaseModel):
 
     medicine_id: str
     active_ingredient: str
+    strength: str
+    dosage_form: str
     alternatives: List[AlternativeRecord]
     price_comparison: PriceComparison
     note: str = SAME_INGREDIENT_NOTE

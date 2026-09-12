@@ -25,9 +25,11 @@ Patients often lack clarity regarding their prescribed medications—wondering i
 ## 🧱 Backend (deterministic catalogue layer)
 
 The `backend/` service implements the deterministic, non-AI part of the pipeline: CSV
-catalogue loading, medicine identification, same-active-ingredient matching, and price
-comparison. `data/medicines.csv` is the source of truth for all medicine facts. RAG/LLM
-explanation, patient history and pattern detection are separate layers, not implemented here.
+catalogue loading, medicine identification, same-medicine (active ingredient + strength +
+dosage form) matching, and price comparison -- including normalized unit pricing (per
+tablet/capsule/mL) so different pack sizes can be compared fairly. `data/medicines.csv` is
+the source of truth for all medicine facts. RAG/LLM explanation, patient history and pattern
+detection are separate layers, not implemented here.
 
 ### Setup
 
@@ -55,9 +57,28 @@ pytest
 ### Endpoints
 
 - `POST /prescription` — identify a medicine (name + optional dosage), and if found, return
-  the verified record, same-active-ingredient alternatives and a price comparison. Never
-  guesses: unmatched medicines return `NOT_FOUND`, non-unique matches return `AMBIGUOUS`
-  with the candidate records (no medicine is guessed).
+  the verified record, same-medicine alternatives and a price comparison. Never guesses:
+  unmatched medicines return `NOT_FOUND`, non-unique matches return `AMBIGUOUS` with the
+  candidate records (no medicine is guessed).
 - `GET /medicine/{medicine_id}` — verified catalogue record for a medicine_id, or 404.
-- `GET /alternatives/{medicine_id}` — same-active-ingredient records and price comparison
-  for a medicine_id, or 404.
+- `GET /alternatives/{medicine_id}` — same-medicine records (same active ingredient,
+  strength and dosage form as the given medicine_id -- brand and pack size may differ) and
+  a price comparison, or 404.
+
+### Price comparison basis
+
+Alternatives only ever include records with the **same active ingredient, strength and
+dosage form** as the matched medicine (a 500mg tablet is never compared against a 250mg
+tablet or a syrup). Because pack sizes can still differ, `price_comparison` reports two
+independent bases:
+
+- **Pack price** (`lowest_pack_price`, `pack_price_difference`) — the total price for the
+  pack as sold, always available whenever a price exists.
+- **Unit price** (`lowest_unit_price`, `unit_price_difference`, `comparison_basis`) —
+  price normalized per tablet/capsule or per mL, only populated when the pack quantity can
+  be reliably parsed from `pack_size` for the items being compared (e.g. `"10's"`,
+  `"1 x 10's"`, `"30ml"`). When it can't (e.g. `"Vial"`, `"200 doses"`), `comparison_basis`
+  is `"PACK_PRICE_ONLY"` and the unit fields stay `null` rather than guessing a quantity.
+
+Missing prices are always `null`, never `0` or estimated. The backend performs all of this
+arithmetic; the LLM layer only explains the already-computed numbers.

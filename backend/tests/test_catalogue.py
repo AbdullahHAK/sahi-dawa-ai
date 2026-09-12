@@ -9,7 +9,7 @@ from app.services.catalogue import (
 
 def test_csv_loads_successfully(sample_csv_path):
     df = load_catalogue_dataframe(sample_csv_path)
-    assert len(df) == 5
+    assert len(df) == 9
 
 
 def test_missing_required_column_is_rejected(sample_dataframe_factory):
