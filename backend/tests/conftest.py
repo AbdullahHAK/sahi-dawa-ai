@@ -2,9 +2,10 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from app.dependencies import get_catalogue_repository
+from app.dependencies import get_catalogue_repository, get_history_repository
 from app.main import app
 from app.services.catalogue import CatalogueRepository
+from app.services.history import HistoryRepository
 
 SAMPLE_CSV_ROWS = [
     # medicine_id, brand_name, generic_name, active_ingredient, strength, dosage_form,
@@ -72,8 +73,14 @@ def sample_dataframe_factory(tmp_path):
 
 
 @pytest.fixture
-def client(sample_repository):
+def history_repository(tmp_path):
+    return HistoryRepository(db_path=tmp_path / "test_history.db")
+
+
+@pytest.fixture
+def client(sample_repository, history_repository):
     app.dependency_overrides[get_catalogue_repository] = lambda: sample_repository
+    app.dependency_overrides[get_history_repository] = lambda: history_repository
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

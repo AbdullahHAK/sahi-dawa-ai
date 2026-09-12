@@ -121,6 +121,36 @@ class AlternativesResponse(BaseModel):
     note: str = SAME_INGREDIENT_NOTE
 
 
+class Encounter(BaseModel):
+    """A stored prescription encounter, with medicine_category resolved from
+    the live catalogue at read time rather than copied at save time."""
+
+    encounter_id: int
+    patient_id: str
+    diagnosis: str
+    medicine_id: str
+    medicine_name: str
+    medicine_category: str
+    dosage: Optional[str] = None
+    encounter_date: str
+
+
+class PatternFlag(BaseModel):
+    """A discussion flag over a patient's history. Never a diagnosis."""
+
+    flag_type: str
+    message: str
+    safety_note: str = "This is a discussion flag, not a diagnosis."
+
+
+class HistoryResponse(BaseModel):
+    """Response for GET /history/{patient_id}."""
+
+    patient_id: str
+    encounters: List[Encounter] = Field(default_factory=list)
+    pattern_flags: List[PatternFlag] = Field(default_factory=list)
+
+
 class MedicineLookupResult(BaseModel):
     """Outcome of identifying a medicine name (+ optional dosage) in the catalogue."""
 
@@ -140,9 +170,9 @@ class PrescriptionRequest(BaseModel):
 class PrescriptionResponse(BaseModel):
     """Response for POST /prescription.
 
-    Covers only the deterministic catalogue/matching/pricing layer. RAG
-    explanation, patient history and pattern detection are out of scope here
-    and are expected to be layered on by downstream services.
+    Covers the deterministic catalogue/matching/pricing/history layer. RAG
+    explanation is out of scope here and is expected to be layered on by
+    downstream services.
     """
 
     patient_id: str
@@ -155,3 +185,4 @@ class PrescriptionResponse(BaseModel):
     candidates: List[CandidateSummary] = Field(default_factory=list)
     alternatives: List[AlternativeRecord] = Field(default_factory=list)
     price_comparison: Optional[PriceComparison] = None
+    pattern_flags: List[PatternFlag] = Field(default_factory=list)
