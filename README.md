@@ -21,3 +21,43 @@ Patients often lack clarity regarding their prescribed medications—wondering i
 - **Esha Inam**
 - **Absar Ahmed**
 - **Afra Naz**
+
+## 🧱 Backend (deterministic catalogue layer)
+
+The `backend/` service implements the deterministic, non-AI part of the pipeline: CSV
+catalogue loading, medicine identification, same-active-ingredient matching, and price
+comparison. `data/medicines.csv` is the source of truth for all medicine facts. RAG/LLM
+explanation, patient history and pattern detection are separate layers, not implemented here.
+
+### Setup
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### Run the API
+
+```bash
+cd backend
+python -m uvicorn app.main:app --reload
+```
+
+Interactive docs at `http://127.0.0.1:8000/docs`.
+
+### Run the tests
+
+```bash
+cd backend
+pytest
+```
+
+### Endpoints
+
+- `POST /prescription` — identify a medicine (name + optional dosage), and if found, return
+  the verified record, same-active-ingredient alternatives and a price comparison. Never
+  guesses: unmatched medicines return `NOT_FOUND`, non-unique matches return `AMBIGUOUS`
+  with the candidate records (no medicine is guessed).
+- `GET /medicine/{medicine_id}` — verified catalogue record for a medicine_id, or 404.
+- `GET /alternatives/{medicine_id}` — same-active-ingredient records and price comparison
+  for a medicine_id, or 404.
